@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Face Morphing</title>
+<style>
+:root {
+  --bg:       #0b0b0e;
+  --bg2:      #111118;
+  --bg3:      #18181f;
+  --border:   #222230;
+  --text:     #dddde8;
+  --muted:    #55556a;
+  --accent:   #7ab4ff;
+  --accent2:  #a78bfa;
+  --green:    #44ffaa;
+  --orange:   #ffaa44;
+  --red:      #ff6666;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* ── Header ── */
+header {
+  text-align: center;
+  padding: 2.2rem 1rem 1.4rem;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, #10101a 0%, var(--bg) 100%);
+}
+
+h1 {
+  font-size: 2rem;
+  font-weight: 300;
+  letter-spacing: 0.12em;
+  color: var(--accent2);
+}
+h1 em { color: var(--accent); font-style: normal; }
+
+.subtitle {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 0.35rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ── Sections ── */
+.section { display: none; max-width: 1080px; margin: 2.5rem auto; padding: 0 1.2rem; }
+.section.active { display: block; }
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: var(--accent);
+  margin-bottom: 0.3rem;
+}
+.section-hint {
+  font-size: 0.83rem;
+  color: var(--muted);
+  margin-bottom: 1.6rem;
+}
+.section-hint .hl-green { color: var(--green); }
+.section-hint .hl-orange { color: var(--orange); }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.58rem 1.3rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-family: inherit;
+  font-weight: 500;
+  transition: filter 0.15s, transform 0.12s;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #08080e;
+}
+.btn-primary:hover:not(:disabled) { filter: brightness(1.12); transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.btn-secondary {
+  background: var(--bg3);
+  color: #bbb;
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: #20202a; color: #fff; }
+
+.btn-sm {
+  padding: 0.28rem 0.7rem;
+  font-size: 0.76rem;
+  border-radius: 5px;
+  background: #2a1515;
+  color: #ff8888;
+  border: 1px solid #4a2020;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.btn-sm:hover { background: #3a1a1a; }
+
+/* ── Upload zone ── */
+.upload-zone {
+  border: 2px dashed #2a2a3a;
+  border-radius: 14px;
+  padding: 3.5rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  background: var(--bg2);
+  transition: border-color 0.2s, background 0.2s;
+  user-select: none;
+}
+.upload-zone:hover,
+.upload-zone.drag-over {
+  border-color: var(--accent);
+  background: #0d1420;
+}
+.upload-zone svg { width: 44px; height: 44px; opacity: 0.4; margin-bottom: 1rem; }
+.upload-zone strong { font-size: 1.05rem; color: #bbb; display: block; margin-bottom: 0.4rem; }
+.upload-zone p { color: var(--muted); font-size: 0.85rem; }
+.upload-zone small { color: #333; font-size: 0.75rem; display: block; margin-top: 0.8rem; }
+#fileInput { display: none; }
+
+.file-list {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.82rem;
+  color: #555;
+  min-height: 1.2rem;
+}
+
+/* ── Error / message ── */
+.error-msg {
+  display: none;
+  background: #1f0d0d;
+  border: 1px solid #4a1f1f;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  color: #ff7070;
+  font-size: 0.85rem;
+  margin: 0.8rem 0;
+  text-align: center;
+}
+
+/* ── Photos grid ── */
+.photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.4rem;
+  margin-bottom: 2rem;
+}
+
+.photo-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.photo-card.state-done   { border-color: #2a5a3a; }
+.photo-card.state-active { border-color: #2a4a6a; }
+
+.card-header {
+  padding: 0.6rem 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.card-label { font-size: 0.82rem; color: #777; font-weight: 500; }
+
+.card-badge {
+  font-size: 0.7rem;
+  padding: 0.18rem 0.55rem;
+  border-radius: 4px;
+  background: #1a1a22;
+  color: #555;
+}
+.card-badge.done    { background: #142a1a; color: #5d5; }
+.card-badge.partial { background: #12202e; color: #5af; }
+
+.canvas-wrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #060608;
+  overflow: hidden;
+}
+.canvas-wrap img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+}
+.eye-canvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  cursor: crosshair;
+}
+
+.card-footer {
+  padding: 0.5rem 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2.2rem;
+}
+.eye-instr { font-size: 0.78rem; color: var(--muted); }
+.eye-instr .hl-g { color: var(--green); }
+.eye-instr .hl-o { color: var(--orange); }
+.eye-instr .hl-ok { color: var(--green); }
+
+/* ── Generate area ── */
+.gen-area { text-align: center; padding: 1.5rem 0 2rem; }
+
+/* ── Loading ── */
+.loading-body {
+  text-align: center;
+  padding: 5rem 2rem;
+}
+.spinner {
+  width: 48px; height: 48px;
+  border: 3px solid #222;
+  border-top: 3px solid var(--accent);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  margin: 0 auto 1.4rem;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-txt { color: #777; font-size: 0.9rem; margin-bottom: 1.2rem; }
+.prog-bar { width: 340px; max-width: 90%; height: 3px; background: #1a1a22; border-radius: 2px; margin: 0 auto; overflow: hidden; }
+.prog-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  transition: width 0.4s;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+@keyframes shimmer { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.4)} }
+
+/* ── Result player ── */
+.player-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+#resultCanvas {
+  border-radius: 8px;
+  box-shadow: 0 0 60px rgba(100,160,255,0.12);
+  max-width: 100%;
+  display: block;
+}
+
+/* Thumbnails */
+.thumbs-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.thumb-item {
+  position: relative;
+  cursor: pointer;
+}
+.thumb-item canvas {
+  display: block;
+  width: 64px;
+  height: 48px;
+  border-radius: 5px;
+  border: 2px solid transparent;
+  transition: border-color 0.15s, transform 0.12s;
+  image-rendering: auto;
+}
+.thumb-item.active canvas { transform: scale(1.08); }
+.thumb-item .thumb-lbl {
+  position: absolute;
+  bottom: 2px; left: 0; right: 0;
+  text-align: center;
+  font-size: 0.62rem;
+  color: rgba(255,255,255,0.6);
+  pointer-events: none;
+}
+
+/* Timeline */
+.timeline-outer {
+  width: 100%;
+  max-width: 700px;
+  position: relative;
+}
+.timeline-bar {
+  height: 7px;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  background: #1a1a22;
+  position: relative;
+}
+.tl-seg { height: 100%; flex-shrink: 0; }
+.tl-cursor {
+  position: absolute;
+  top: -3px; bottom: -3px;
+  width: 2px;
+  background: rgba(255,255,255,0.85);
+  border-radius: 1px;
+  pointer-events: none;
+  transition: left 0.04s linear;
+}
+
+/* Controls row */
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  max-width: 700px;
+}
+
+.ctrl-btn {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  border: 1px solid #2a2a3a;
+  background: var(--bg3);
+  color: #bbb;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  transition: background 0.12s, color 0.12s;
+  flex-shrink: 0;
+}
+.ctrl-btn:hover { background: #222230; color: #fff; }
+.ctrl-btn.active { color: var(--accent); }
+
+#frameSlider {
+  flex: 1;
+  min-width: 120px;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: #222230;
+  outline: none;
+  cursor: pointer;
+}
+#frameSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+}
+#frameSlider::-moz-range-thumb {
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
+}
+
+.frame-ctr {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  min-width: 60px;
+  text-align: center;
+}
+
+.speed-sel {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: #bbb;
+  padding: 0.28rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+.speed-sel:focus { outline: none; }
+
+.restart-row {
+  margin-top: 0.5rem;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Face <em>Morphing</em></h1>
+  <p class="subtitle">Alignement par les yeux &nbsp;&bull;&nbsp; Optical Flow &nbsp;&bull;&nbsp; Animation fluide</p>
+</header>
+
+<!-- ═══ SECTION 1 : Upload ═══ -->
+<section id="sec-upload" class="section active">
+  <div class="upload-zone" id="uploadZone">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+      <rect x="3" y="3" width="18" height="18" rx="3"/>
+      <circle cx="8.5" cy="8.5" r="1.5"/>
+      <path d="M21 15l-5-5L5 21"/>
+    </svg>
+    <strong>Glissez vos photos ici</strong>
+    <p>ou cliquez pour choisir 2 à 5 fichiers JPEG</p>
+    <small>JPEG uniquement &bull; 50 MB max</small>
+    <input type="file" id="fileInput" accept="image/jpeg,image/jpg" multiple>
+  </div>
+  <div class="error-msg" id="uploadErr"></div>
+  <div class="file-list" id="fileList"></div>
+  <div style="text-align:center;margin-top:1.4rem">
+    <button class="btn btn-primary" id="uploadBtn" disabled>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
+      Charger les photos
+    </button>
+  </div>
+</section>
+
+<!-- ═══ SECTION 2 : Marquage des yeux ═══ -->
+<section id="sec-eyes" class="section">
+  <h2 class="section-title">Marquer les yeux</h2>
+  <p class="section-hint">
+    Pour chaque photo : cliquez d'abord sur l'<span class="hl-green">oeil gauche</span>,
+    puis sur l'<span class="hl-orange">oeil droit</span>. Cliquez une 3e fois pour recommencer.
+  </p>
+  <div class="photos-grid" id="photosGrid"></div>
+  <div class="error-msg" id="eyeErr"></div>
+  <div class="gen-area">
+    <button class="btn btn-primary" id="generateBtn" disabled>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      Générer le morphing
+    </button>
+  </div>
+</section>
+
+<!-- ═══ SECTION 3 : Loading ═══ -->
+<section id="sec-loading" class="section">
+  <div class="loading-body">
+    <div class="spinner"></div>
+    <p class="loading-txt" id="loadingTxt">Alignement des images...</p>
+    <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+  </div>
+</section>
+
+<!-- ═══ SECTION 4 : Résultat ═══ -->
+<section id="sec-result" class="section">
+  <div class="player-wrap">
+    <div class="thumbs-row" id="thumbsRow"></div>
+
+    <canvas id="resultCanvas"></canvas>
+
+    <div class="timeline-outer">
+      <div class="timeline-bar" id="timelineBar">
+        <div class="tl-cursor" id="tlCursor"></div>
+      </div>
+    </div>
+
+    <div class="controls-row">
+      <button class="ctrl-btn" id="backBtn" title="Retour au début">&#9198;</button>
+      <button class="ctrl-btn" id="playBtn" title="Lecture / Pause">&#9654;</button>
+      <button class="ctrl-btn active" id="loopBtn" title="Boucle">&#x21BA;</button>
+      <input type="range" id="frameSlider" min="0" value="0">
+      <span class="frame-ctr" id="frameCtr">0 / 0</span>
+      <select class="speed-sel" id="speedSel">
+        <option value="0.5">0.5×</option>
+        <option value="1" selected>1×</option>
+        <option value="1.5">1.5×</option>
+        <option value="2">2×</option>
+        <option value="3">3×</option>
+      </select>
+    </div>
+
+    <div class="restart-row">
+      <button class="btn btn-secondary" id="restartBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M1 4v6h6M23 20v-6h-6"/>
+          <path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"/>
+        </svg>
+        Nouveau morphing
+      </button>
+    </div>
+  </div>
+</section>
+
+<script>
+// ═══════════════════════════════════════════════
+//  Constants
+// ═══════════════════════════════════════════════
+const PAUSE  = 6;
+const MORPH  = 24;
+const FPS    = 24;
+
+const COLORS = ['#77aaff','#ffaa55','#55ffaa','#ff77bb','#aaffee'];
+
+// ═══════════════════════════════════════════════
+//  State
+// ═══════════════════════════════════════════════
+const S = {
+  sid:        null,
+  images:     [],   // [{b64,w,h}]
+  eyes:       [],   // [{left:[x,y]|null, right:[x,y]|null}]
+  frames:     [],   // base64 strings
+  framePhoto: [],   // float index per frame
+  nPhotos:    0,
+  imgEls:     [],   // preloaded HTMLImageElements
+  cur:        0,
+  playing:    false,
+  looping:    true,
+  lastTs:     0,
+  raf:        null,
+};
+let selectedFiles = [];
+
+// ═══════════════════════════════════════════════
+//  Helpers
+// ═══════════════════════════════════════════════
+function show(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideErr(id) { document.getElementById(id).style.display = 'none'; }
+
+// ═══════════════════════════════════════════════
+//  Upload
+// ═══════════════════════════════════════════════
+const uploadZone = document.getElementById('uploadZone');
+const fileInput  = document.getElementById('fileInput');
+const uploadBtn  = document.getElementById('uploadBtn');
+const fileList   = document.getElementById('fileList');
+
+uploadZone.addEventListener('click', () => fileInput.click());
+uploadZone.addEventListener('dragover',  e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', ()  => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  applyFiles(Array.from(e.dataTransfer.files));
+});
+fileInput.addEventListener('change', () => applyFiles(Array.from(fileInput.files)));
+
+function applyFiles(files) {
+  hideErr('uploadErr');
+  const ok = files.filter(f =>
+    f.type === 'image/jpeg' || f.type === 'image/jpg' || /\.jpe?g$/i.test(f.name)
+  ).slice(0, 5);
+  if (ok.length < 2 || ok.length > 5) {
+    showErr('uploadErr', 'Sélectionnez entre 2 et 5 photos JPEG.');
+    uploadBtn.disabled = true;
+    selectedFiles = [];
+    fileList.textContent = '';
+    return;
+  }
+  selectedFiles = ok;
+  fileList.textContent = ok.map(f => f.name).join(' · ');
+  uploadBtn.disabled = false;
+}
+
+uploadBtn.addEventListener('click', async () => {
+  if (!selectedFiles.length) return;
+  uploadBtn.disabled = true;
+  uploadBtn.textContent = 'Envoi en cours...';
+  hideErr('uploadErr');
+
+  const fd = new FormData();
+  selectedFiles.forEach(f => fd.append('photos', f));
+
+  try {
+    const res  = await fetch('/upload', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    S.sid    = data.sid;
+    S.images = data.images;
+    S.eyes   = data.images.map(() => ({ left: null, right: null }));
+
+    buildEyeUI();
+    show('sec-eyes');
+  } catch (e) {
+    showErr('uploadErr', e.message || 'Erreur lors de l\'envoi');
+    uploadBtn.disabled  = false;
+    uploadBtn.textContent = 'Charger les photos';
+  }
+});
+
+// ═══════════════════════════════════════════════
+//  Eye marking
+// ═══════════════════════════════════════════════
+const DISP_MAX = 340; // max canvas display size in px
+
+function buildEyeUI() {
+  const grid = document.getElementById('photosGrid');
+  grid.innerHTML = '';
+
+  S.images.forEach((img, idx) => {
+    const scale = Math.min(1, DISP_MAX / Math.max(img.w, img.h));
+    const dw = Math.round(img.w * scale);
+    const dh = Math.round(img.h * scale);
+
+    const card = document.createElement('div');
+    card.className = 'photo-card';
+    card.dataset.idx = idx;
+
+    card.innerHTML = `
+      <div class="card-header">
+        <span class="card-label">Photo ${idx + 1}</span>
+        <span class="card-badge" id="badge-${idx}">En attente</span>
+      </div>
+      <div class="canvas-wrap" style="width:${dw}px;height:${dh}px;margin:0 auto;">
+        <img src="data:image/jpeg;base64,${img.b64}" width="${dw}" height="${dh}" draggable="false" alt="">
+        <canvas class="eye-canvas" id="ecanv-${idx}" width="${dw}" height="${dh}"></canvas>
+      </div>
+      <div class="card-footer">
+        <span class="eye-instr" id="instr-${idx}">
+          Clic 1 → <span class="hl-g">oeil gauche</span>
+        </span>
+        <button class="btn-sm" onclick="resetEyes(${idx})">Réinitialiser</button>
+      </div>
+    `;
+    grid.appendChild(card);
+
+    const canvas = document.getElementById(`ecanv-${idx}`);
+    canvas._sx = img.w / dw;
+    canvas._sy = img.h / dh;
+    canvas.addEventListener('click', e => onEyeClick(e, idx));
+  });
+
+  updateGenBtn();
+}
+
+function onEyeClick(e, idx) {
+  const canvas = document.getElementById(`ecanv-${idx}`);
+  const rect   = canvas.getBoundingClientRect();
+  const cx = (e.clientX - rect.left) * (canvas.width  / rect.width);
+  const cy = (e.clientY - rect.top)  * (canvas.height / rect.height);
+  const ix = cx * canvas._sx;
+  const iy = cy * canvas._sy;
+
+  const eyes = S.eyes[idx];
+
+  if (!eyes.left) {
+    eyes.left = [ix, iy];
+    setInstr(idx, 'right');
+  } else if (!eyes.right) {
+    eyes.right = [ix, iy];
+    setInstr(idx, 'done');
+    setCardState(idx, 'done');
+  } else {
+    // Third click: reset
+    eyes.left  = [ix, iy];
+    eyes.right = null;
+    setInstr(idx, 'right');
+    setCardState(idx, 'active');
+  }
+
+  drawMarkers(idx);
+  updateGenBtn();
+}
+
+function drawMarkers(idx) {
+  const canvas = document.getElementById(`ecanv-${idx}`);
+  const ctx    = canvas.getContext('2d');
+  const eyes   = S.eyes[idx];
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const toC = pt => [pt[0] / canvas._sx, pt[1] / canvas._sy];
+
+  if (eyes.left)  drawDot(ctx, ...toC(eyes.left),  '#44ffaa', 'G');
+  if (eyes.right) drawDot(ctx, ...toC(eyes.right), '#ffaa44', 'D');
+}
+
+function drawDot(ctx, x, y, color, lbl) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle   = color;
+  ctx.lineWidth   = 1.8;
+  // outer ring
+  ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI*2); ctx.stroke();
+  // center dot
+  ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI*2); ctx.fill();
+  // crosshair
+  ctx.beginPath();
+  ctx.moveTo(x-15,y); ctx.lineTo(x-6,y);
+  ctx.moveTo(x+6,y);  ctx.lineTo(x+15,y);
+  ctx.moveTo(x,y-15); ctx.lineTo(x,y-6);
+  ctx.moveTo(x,y+6);  ctx.lineTo(x,y+15);
+  ctx.stroke();
+  // label
+  ctx.font = 'bold 9px monospace';
+  ctx.fillText(lbl, x+12, y-10);
+  ctx.restore();
+}
+
+function resetEyes(idx) {
+  S.eyes[idx] = { left: null, right: null };
+  const canvas = document.getElementById(`ecanv-${idx}`);
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+  setInstr(idx, 'left');
+  setCardState(idx, '');
+  updateGenBtn();
+}
+
+function setInstr(idx, step) {
+  const el = document.getElementById(`instr-${idx}`);
+  if (step === 'left')
+    el.innerHTML = 'Clic 1 → <span class="hl-g">oeil gauche</span>';
+  else if (step === 'right')
+    el.innerHTML = 'Clic 2 → <span class="hl-o">oeil droit</span>';
+  else
+    el.innerHTML = '<span class="hl-ok">✓ Les deux yeux marqués</span>';
+}
+
+function setCardState(idx, state) {
+  const card  = document.querySelector(`.photo-card[data-idx="${idx}"]`);
+  const badge = document.getElementById(`badge-${idx}`);
+  card.className  = 'photo-card' + (state ? ' state-' + state : '');
+  badge.className = 'card-badge' + (state === 'done' ? ' done' : state === 'active' ? ' partial' : '');
+  badge.textContent = state === 'done' ? '✓ Prêt' : state === 'active' ? '1/2' : 'En attente';
+}
+
+function updateGenBtn() {
+  const ok = S.eyes.length > 0 && S.eyes.every(e => e.left && e.right);
+  document.getElementById('generateBtn').disabled = !ok;
+}
+
+// ═══════════════════════════════════════════════
+//  Generate
+// ═══════════════════════════════════════════════
+document.getElementById('generateBtn').addEventListener('click', async () => {
+  hideErr('eyeErr');
+  show('sec-loading');
+  document.getElementById('progFill').style.width = '0%';
+
+  // Fake progress animation
+  let pct = 0;
+  const progTimer = setInterval(() => {
+    pct = Math.min(pct + Math.random() * 5, 88);
+    document.getElementById('progFill').style.width = pct + '%';
+  }, 400);
+
+  const steps = [
+    'Alignement des images...',
+    'Calcul du flux optique...',
+    'Génération des transitions...',
+    'Encodage des frames...'
+  ];
+  let si = 0;
+  const txtTimer = setInterval(() => {
+    if (si < steps.length - 1) si++;
+    document.getElementById('loadingTxt').textContent = steps[si];
+  }, 2500);
+
+  try {
+    const res  = await fetch('/generate', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ sid: S.sid, eyes: S.eyes })
+    });
+    clearInterval(progTimer);
+    clearInterval(txtTimer);
+    document.getElementById('progFill').style.width = '100%';
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    S.frames     = data.frames;
+    S.framePhoto = data.frame_photo;
+    S.nPhotos    = data.n_photos;
+
+    document.getElementById('loadingTxt').textContent = 'Chargement des images...';
+    await buildPlayer();
+    show('sec-result');
+
+  } catch (e) {
+    clearInterval(progTimer);
+    clearInterval(txtTimer);
+    show('sec-eyes');
+    showErr('eyeErr', 'Erreur : ' + (e.message || 'Génération échouée'));
+  }
+});
+
+// ═══════════════════════════════════════════════
+//  Player
+// ═══════════════════════════════════════════════
+async function buildPlayer() {
+  // Preload all frames
+  S.imgEls = await Promise.all(S.frames.map(b64 => new Promise(res => {
+    const img = new Image();
+    img.onload = () => res(img);
+    img.src = 'data:image/jpeg;base64,' + b64;
+  })));
+
+  // Size canvas to fit viewport
+  const canvas   = document.getElementById('resultCanvas');
+  const first    = S.imgEls[0];
+  const maxW     = Math.min(700, window.innerWidth - 40);
+  const scale    = Math.min(1, maxW / first.naturalWidth);
+  canvas.width   = Math.round(first.naturalWidth  * scale);
+  canvas.height  = Math.round(first.naturalHeight * scale);
+
+  // Slider
+  const slider = document.getElementById('frameSlider');
+  slider.max   = S.frames.length - 1;
+  slider.value = 0;
+
+  // Build timeline
+  buildTimeline();
+
+  // Build thumbnails
+  buildThumbs();
+
+  // Init
+  S.cur     = 0;
+  S.playing = true;
+  S.lastTs  = 0;
+  renderFrame(0);
+  document.getElementById('playBtn').innerHTML = '&#9646;&#9646;';
+  requestAnimationFrame(playerLoop);
+}
+
+// ── Timeline ──
+function buildTimeline() {
+  const bar   = document.getElementById('timelineBar');
+  const total = S.frames.length;
+  bar.querySelectorAll('.tl-seg').forEach(el => el.remove());
+
+  // Segments: [pause0] [morph0→1] [pause1] [morph1→2] ... [pauseN-1]
+  const segs = [];
+  segs.push({ len: PAUSE, type: 'pause', photo: 0 });
+  for (let i = 0; i < S.nPhotos - 1; i++) {
+    segs.push({ len: MORPH, type: 'morph', from: i, to: i+1 });
+    segs.push({ len: PAUSE, type: 'pause', photo: i+1 });
+  }
+
+  const cursor = document.getElementById('tlCursor');
+  segs.forEach(seg => {
+    const div = document.createElement('div');
+    div.className = 'tl-seg';
+    div.style.width = (seg.len / total * 100) + '%';
+    if (seg.type === 'pause') {
+      div.style.background = COLORS[seg.photo % COLORS.length];
+    } else {
+      div.style.background =
+        `linear-gradient(90deg,${COLORS[seg.from % COLORS.length]},${COLORS[seg.to % COLORS.length]})`;
+    }
+    bar.insertBefore(div, cursor);
+  });
+}
+
+// ── Thumbnails ──
+function buildThumbs() {
+  const row = document.getElementById('thumbsRow');
+  row.innerHTML = '';
+
+  for (let i = 0; i < S.nPhotos; i++) {
+    // The i-th photo's pause block starts at i*(PAUSE+MORPH)
+    const fi = i * (PAUSE + MORPH);
+    const img = S.imgEls[Math.min(fi, S.imgEls.length - 1)];
+
+    const wrap = document.createElement('div');
+    wrap.className = 'thumb-item';
+    wrap.id = `thumb-${i}`;
+
+    const tc = document.createElement('canvas');
+    tc.width  = 64;
+    tc.height = 48;
+    tc.style.borderColor = COLORS[i % COLORS.length];
+    tc.getContext('2d').drawImage(img, 0, 0, 64, 48);
+
+    const lbl = document.createElement('span');
+    lbl.className = 'thumb-lbl';
+    lbl.textContent = `P${i+1}`;
+
+    wrap.appendChild(tc);
+    wrap.appendChild(lbl);
+    wrap.addEventListener('click', () => seekTo(fi));
+    row.appendChild(wrap);
+  }
+}
+
+// ── Render a frame ──
+function renderFrame(idx) {
+  const canvas = document.getElementById('resultCanvas');
+  canvas.getContext('2d').drawImage(S.imgEls[idx], 0, 0, canvas.width, canvas.height);
+
+  document.getElementById('frameSlider').value = idx;
+  document.getElementById('frameCtr').textContent = `${idx + 1} / ${S.frames.length}`;
+
+  const pct = idx / (S.frames.length - 1) * 100;
+  document.getElementById('tlCursor').style.left = pct + '%';
+
+  // Highlight active thumbnail
+  const photoIdx = Math.round(S.framePhoto[idx]);
+  for (let i = 0; i < S.nPhotos; i++) {
+    const w = document.getElementById(`thumb-${i}`);
+    if (w) w.classList.toggle('active', i === photoIdx);
+  }
+}
+
+function seekTo(idx) {
+  S.cur = Math.max(0, Math.min(idx, S.frames.length - 1));
+  renderFrame(S.cur);
+}
+
+// ── Animation loop ──
+function playerLoop(ts) {
+  if (!S.playing) return;
+  const speed = parseFloat(document.getElementById('speedSel').value);
+  const dur   = 1000 / (FPS * speed);
+
+  if (ts - S.lastTs >= dur) {
+    S.lastTs = ts;
+    S.cur++;
+    if (S.cur >= S.frames.length) {
+      if (S.looping) {
+        S.cur = 0;
+      } else {
+        S.cur = S.frames.length - 1;
+        S.playing = false;
+        document.getElementById('playBtn').innerHTML = '&#9654;';
+        renderFrame(S.cur);
+        return;
+      }
+    }
+    renderFrame(S.cur);
+  }
+  S.raf = requestAnimationFrame(playerLoop);
+}
+
+// ── Controls ──
+document.getElementById('playBtn').addEventListener('click', () => {
+  S.playing = !S.playing;
+  document.getElementById('playBtn').innerHTML = S.playing ? '&#9646;&#9646;' : '&#9654;';
+  if (S.playing) {
+    S.lastTs = 0;
+    requestAnimationFrame(playerLoop);
+  }
+});
+
+document.getElementById('backBtn').addEventListener('click', () => seekTo(0));
+
+document.getElementById('loopBtn').addEventListener('click', () => {
+  S.looping = !S.looping;
+  document.getElementById('loopBtn').classList.toggle('active', S.looping);
+});
+
+document.getElementById('frameSlider').addEventListener('input', e => {
+  S.cur = parseInt(e.target.value);
+  renderFrame(S.cur);
+});
+
+document.getElementById('restartBtn').addEventListener('click', () => {
+  S.playing = false;
+  if (S.raf) cancelAnimationFrame(S.raf);
+  Object.assign(S, {
+    sid:null, images:[], eyes:[], frames:[], framePhoto:[], nPhotos:0,
+    imgEls:[], cur:0, playing:false, looping:true, lastTs:0, raf:null
+  });
+  selectedFiles = [];
+  fileInput.value   = '';
+  fileList.textContent = '';
+  uploadBtn.disabled   = true;
+  uploadBtn.textContent = 'Charger les photos';
+  show('sec-upload');
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('sec-result').classList.contains('active')) return;
+  if (e.code === 'Space') {
+    e.preventDefault();
+    document.getElementById('playBtn').click();
+  } else if (e.code === 'ArrowLeft') {
+    seekTo(S.cur - 1);
+  } else if (e.code === 'ArrowRight') {
+    seekTo(S.cur + 1);
+  } else if (e.code === 'Home') {
+    seekTo(0);
+  } else if (e.code === 'End') {
+    seekTo(S.frames.length - 1);
+  }
+});
+</script>
+</body>
+</html>
