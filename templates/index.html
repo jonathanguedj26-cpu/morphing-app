@@ -227,7 +227,14 @@ h1 em { color: var(--accent); font-style: normal; }
 .eye-instr .hl-ok { color: var(--green); }
 
 /* ── Generate area ── */
-.gen-area { text-align: center; padding: 1.5rem 0 2rem; }
+.gen-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 1.5rem 0 2rem;
+}
 
 /* ── Loading ── */
 .loading-body {
@@ -406,6 +413,239 @@ h1 em { color: var(--accent); font-style: normal; }
 .restart-row {
   margin-top: 0.5rem;
 }
+
+/* ── Eyes section layout ── */
+.eyes-layout {
+  display: flex;
+  gap: 1.6rem;
+  align-items: flex-start;
+}
+.eyes-main { flex: 1; min-width: 0; }
+
+/* ── Card drag & delete ── */
+.card-header { cursor: grab; }
+.card-header:active { cursor: grabbing; }
+.photo-card.dragging { opacity: 0.35; }
+.photo-card.drag-target {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px rgba(122,180,255,0.2);
+}
+.drag-handle { color: #363645; font-size: 1rem; margin-right: 0.25rem; }
+.card-del-btn {
+  background: none;
+  border: none;
+  color: #3a3a4a;
+  cursor: pointer;
+  font-size: 1.15rem;
+  line-height: 1;
+  padding: 0 2px;
+  transition: color 0.12s;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+.card-del-btn:hover { color: var(--red); }
+
+/* ── Side panel ── */
+.photos-panel {
+  width: 210px;
+  flex-shrink: 0;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 4rem);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.panel-header {
+  padding: 0.65rem 0.9rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.panel-list {
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+}
+.panel-list::-webkit-scrollbar { width: 3px; }
+.panel-list::-webkit-scrollbar-track { background: transparent; }
+.panel-list::-webkit-scrollbar-thumb { background: #2a2a38; border-radius: 2px; }
+.panel-item {
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+  padding: 0.4rem 0.7rem;
+  border-bottom: 1px solid #141420;
+  cursor: grab;
+  user-select: none;
+  transition: background 0.1s;
+}
+.panel-item:active { cursor: grabbing; }
+.panel-item:hover { background: #13131b; }
+.panel-item.drag-over { background: #192030; border-color: var(--accent); }
+.panel-num {
+  font-size: 0.68rem;
+  color: var(--muted);
+  min-width: 18px;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.panel-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.panel-name {
+  flex: 1;
+  font-size: 0.74rem;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.panel-del {
+  color: #303040;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 1px;
+  transition: color 0.12s;
+  flex-shrink: 0;
+}
+.panel-del:hover { color: var(--red); }
+.panel-add-btn {
+  width: 100%;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.74rem;
+  padding: 0.55rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s, color 0.12s;
+  text-align: center;
+  flex-shrink: 0;
+}
+.panel-add-btn:hover { background: #13131b; color: var(--accent); }
+
+@media (max-width: 700px) {
+  .eyes-layout { flex-direction: column; }
+  .photos-panel { width: 100%; position: static; max-height: 260px; }
+}
+
+/* ── Crop button & badge on cards ── */
+.btn-crop-sm {
+  padding: 0.28rem 0.6rem;
+  font-size: 0.82rem;
+  border-radius: 5px;
+  background: #151525;
+  color: #7777bb;
+  border: 1px solid #252540;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-crop-sm:hover { background: #1e1e35; color: #9999dd; }
+.crop-badge {
+  font-size: 0.67rem;
+  padding: 0.14rem 0.42rem;
+  border-radius: 4px;
+  background: #0e1f18;
+  color: #55cc88;
+  border: 1px solid #1a3a28;
+  white-space: nowrap;
+}
+
+/* ── Crop modal ── */
+.crop-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+.crop-modal {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  width: min(920px, 100%);
+  max-height: calc(100vh - 2rem);
+  overflow: hidden;
+}
+.crop-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.crop-modal-title {
+  font-size: 0.9rem;
+  color: var(--accent);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.crop-close-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 0 0 0 0.8rem;
+  line-height: 1;
+  transition: color 0.12s;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+.crop-close-btn:hover { color: var(--text); }
+.crop-canvas-wrap {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.2rem;
+  background: #040406;
+  min-height: 0;
+}
+#cropCanvas {
+  display: block;
+  cursor: crosshair;
+  max-width: 100%;
+}
+.crop-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 0.8rem 1.1rem;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.crop-hint {
+  width: 100%;
+  text-align: center;
+  font-size: 0.76rem;
+  color: var(--muted);
+  margin-top: -0.2rem;
+}
 </style>
 </head>
 <body>
@@ -444,20 +684,69 @@ h1 em { color: var(--accent); font-style: normal; }
 
 <!-- ═══ SECTION 2 : Marquage des yeux ═══ -->
 <section id="sec-eyes" class="section">
-  <h2 class="section-title">Marquer les yeux</h2>
-  <p class="section-hint">
-    Pour chaque photo : cliquez d'abord sur l'<span class="hl-green">oeil gauche</span>,
-    puis sur l'<span class="hl-orange">oeil droit</span>. Cliquez une 3e fois pour recommencer.
-  </p>
-  <div class="photos-grid" id="photosGrid"></div>
-  <div class="error-msg" id="eyeErr"></div>
-  <div class="gen-area">
-    <button class="btn btn-primary" id="generateBtn" disabled>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-      Générer le morphing
-    </button>
+  <div class="eyes-layout">
+
+    <!-- Colonne principale -->
+    <div class="eyes-main">
+      <h2 class="section-title">Marquer les yeux</h2>
+      <p class="section-hint">
+        Pour chaque photo : cliquez d'abord sur l'<span class="hl-green">oeil gauche</span>,
+        puis sur l'<span class="hl-orange">oeil droit</span>. Cliquez une 3e fois pour recommencer.
+        &nbsp;<span style="color:var(--muted)">— Glissez une carte (header) pour réordonner.</span>
+      </p>
+      <div class="photos-grid" id="photosGrid"></div>
+      <div class="error-msg" id="eyeErr"></div>
+      <div id="addProgressWrap" style="display:none;margin-bottom:0.8rem">
+        <div class="prog-bar" style="margin:0 auto 0.4rem"><div class="prog-fill" id="addProgFill"></div></div>
+        <p id="addProgTxt" style="font-size:0.82rem;color:var(--muted);text-align:center"></p>
+      </div>
+      <div class="gen-area">
+        <button class="btn btn-secondary" id="addPhotosBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          Ajouter des photos
+        </button>
+        <button class="btn btn-primary" id="generateBtn" disabled>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          Générer le morphing
+        </button>
+      </div>
+    </div>
+
+    <!-- Panneau latéral -->
+    <aside class="photos-panel">
+      <div class="panel-header">Photos &nbsp;<span id="panelCount">0</span></div>
+      <ul class="panel-list" id="panelList"></ul>
+      <button class="panel-add-btn" id="panelAddBtn">+ Ajouter des photos</button>
+    </aside>
+
   </div>
+  <input type="file" id="addFileInput" accept="image/jpeg,image/jpg" multiple style="display:none">
 </section>
+
+<!-- ═══ MODAL : Recadrage ═══ -->
+<div id="cropModal" class="crop-modal-overlay" style="display:none">
+  <div class="crop-modal">
+    <div class="crop-modal-header">
+      <span class="crop-modal-title">✂ <span id="cropPhotoLabel"></span></span>
+      <button class="crop-close-btn" id="cropCloseBtn" title="Annuler (Échap)">×</button>
+    </div>
+    <div class="crop-canvas-wrap">
+      <canvas id="cropCanvas"></canvas>
+    </div>
+    <div class="crop-modal-footer">
+      <button class="btn btn-secondary" id="cropResetBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        Photo entière
+      </button>
+      <button class="btn btn-primary" id="cropApplyBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
+        Valider le recadrage
+      </button>
+      <button class="btn btn-secondary" id="cropCancelBtn">Annuler</button>
+      <p class="crop-hint">Glisser les poignées pour ajuster · Entrée = valider · Échap = annuler</p>
+    </div>
+  </div>
+</div>
 
 <!-- ═══ SECTION 3 : Loading ═══ -->
 <section id="sec-loading" class="section">
@@ -541,6 +830,7 @@ const S = {
   raf:        null,
 };
 let selectedFiles = [];
+let dndSrc        = null;   // index de la carte/ligne en cours de drag
 
 // ═══════════════════════════════════════════════
 //  Helpers
@@ -634,10 +924,10 @@ uploadBtn.addEventListener('click', () => {
       if (xhr.status !== 200) throw new Error(data.error);
 
       S.sid    = data.sid;
-      S.images = data.images;
-      S.eyes   = data.images.map(() => ({ left: null, right: null }));
+      S.images = data.images.map((img, i) => ({ ...img, name: selectedFiles[i] ? selectedFiles[i].name : `Photo ${i + 1}` }));
+      S.eyes   = S.images.map(() => ({ left: null, right: null }));
 
-      buildEyeUI();
+      rebuildEyesSection();
       show('sec-eyes');
     } catch (e) {
       showErr('uploadErr', e.message || 'Erreur lors de l\'envoi');
@@ -659,6 +949,74 @@ uploadBtn.addEventListener('click', () => {
 // ═══════════════════════════════════════════════
 const DISP_MAX = 340; // max canvas display size in px
 
+function rebuildEyesSection() {
+  buildEyeUI();
+  buildPanel();
+}
+
+// ── Photo management ──
+function deletePhoto(idx) {
+  hideErr('eyeErr');
+  if (S.images.length <= 2) {
+    showErr('eyeErr', 'Il faut au moins 2 photos pour créer un morphing.');
+    return;
+  }
+  S.images.splice(idx, 1);
+  S.eyes.splice(idx, 1);
+  rebuildEyesSection();
+  fetch('/remove_photo', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sid: S.sid, idx })
+  }).catch(() => showErr('eyeErr', 'Erreur de synchronisation avec le serveur'));
+}
+
+function applyReorder(fromIdx, toIdx) {
+  if (fromIdx === toIdx) return;
+  dndSrc = null;
+  const order      = Array.from({ length: S.images.length }, (_, i) => i);
+  order.splice(fromIdx, 1);
+  order.splice(toIdx, 0, fromIdx);
+  const prevImages = S.images.slice();
+  const prevEyes   = S.eyes.slice();
+  S.images = order.map(i => prevImages[i]);
+  S.eyes   = order.map(i => prevEyes[i]);
+  rebuildEyesSection();
+  fetch('/reorder_photos', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sid: S.sid, order })
+  }).catch(() => showErr('eyeErr', 'Erreur de synchronisation avec le serveur'));
+}
+
+// ── Card drag handlers ──
+function onCardDragStart(e, idx) {
+  dndSrc = idx;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => {
+    const c = document.querySelector(`.photo-card[data-idx="${idx}"]`);
+    if (c) c.classList.add('dragging');
+  }, 0);
+}
+function onCardDragOver(e, idx) {
+  e.preventDefault();
+  if (dndSrc !== null && dndSrc !== idx)
+    document.querySelector(`.photo-card[data-idx="${idx}"]`)?.classList.add('drag-target');
+}
+function onCardDragLeave(idx) {
+  document.querySelector(`.photo-card[data-idx="${idx}"]`)?.classList.remove('drag-target');
+}
+function onCardDrop(e, idx) {
+  e.preventDefault();
+  document.querySelector(`.photo-card[data-idx="${idx}"]`)?.classList.remove('drag-target');
+  if (dndSrc !== null && dndSrc !== idx) applyReorder(dndSrc, idx);
+}
+function onCardDragEnd() {
+  document.querySelectorAll('.photo-card').forEach(c => c.classList.remove('dragging', 'drag-target'));
+  dndSrc = null;
+}
+
+// ── Grid builder ──
 function buildEyeUI() {
   const grid = document.getElementById('photosGrid');
   grid.innerHTML = '';
@@ -674,8 +1032,11 @@ function buildEyeUI() {
 
     card.innerHTML = `
       <div class="card-header">
-        <span class="card-label">Photo ${idx + 1}</span>
-        <span class="card-badge" id="badge-${idx}">En attente</span>
+        <span class="card-label"><span class="drag-handle" title="Glisser pour réordonner">⠿</span> Photo ${idx + 1}</span>
+        <div style="display:flex;align-items:center;gap:0.4rem">
+          <span class="card-badge" id="badge-${idx}">En attente</span>
+          <button class="card-del-btn" title="Supprimer cette photo">×</button>
+        </div>
       </div>
       <div class="canvas-wrap" style="width:${dw}px;height:${dh}px;margin:0 auto;">
         <img src="data:image/jpeg;base64,${img.b64}" width="${dw}" height="${dh}" draggable="false" alt="">
@@ -685,19 +1046,160 @@ function buildEyeUI() {
         <span class="eye-instr" id="instr-${idx}">
           Clic 1 → <span class="hl-g">oeil gauche</span>
         </span>
-        <button class="btn-sm" onclick="resetEyes(${idx})">Réinitialiser</button>
+        <div style="display:flex;gap:0.4rem;align-items:center">
+          ${img.cropped ? '<span class="crop-badge">✂ Recadrée</span>' : ''}
+          <button class="btn-crop-sm" title="Recadrer cette photo">✂</button>
+          <button class="btn-sm" onclick="resetEyes(${idx})">Réinitialiser</button>
+        </div>
       </div>
     `;
+
+    card.querySelector('.card-del-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      deletePhoto(idx);
+    });
+    card.querySelector('.btn-crop-sm').addEventListener('click', e => {
+      e.stopPropagation();
+      openCropModal(idx);
+    });
+
+    // Drag starts only from the header (never from the canvas)
+    card.querySelector('.card-header').addEventListener('mousedown', () => {
+      card.draggable = true;
+    });
+    card.addEventListener('dragstart', e => onCardDragStart(e, idx));
+    card.addEventListener('dragover',  e => onCardDragOver(e, idx));
+    card.addEventListener('dragleave', () => onCardDragLeave(idx));
+    card.addEventListener('drop',      e => onCardDrop(e, idx));
+    card.addEventListener('dragend',   () => { card.draggable = false; onCardDragEnd(); });
+
     grid.appendChild(card);
 
     const canvas = document.getElementById(`ecanv-${idx}`);
     canvas._sx = img.w / dw;
     canvas._sy = img.h / dh;
     canvas.addEventListener('click', e => onEyeClick(e, idx));
+
+    // Restore already-marked eyes after a rebuild
+    const eyes = S.eyes[idx];
+    if (eyes.left || eyes.right) {
+      drawMarkers(idx);
+      if (eyes.left && eyes.right) { setInstr(idx, 'done'); setCardState(idx, 'done'); }
+      else if (eyes.left)          { setInstr(idx, 'right'); setCardState(idx, 'active'); }
+    }
   });
 
   updateGenBtn();
 }
+
+// ── Side panel builder ──
+function buildPanel() {
+  const list  = document.getElementById('panelList');
+  const count = document.getElementById('panelCount');
+  if (!list) return;
+  list.innerHTML = '';
+  count.textContent = S.images.length;
+
+  S.images.forEach((img, i) => {
+    const li = document.createElement('li');
+    li.className  = 'panel-item';
+    li.draggable  = true;
+    li.dataset.idx = i;
+    li.innerHTML = `
+      <span class="panel-num">${i + 1}</span>
+      <span class="panel-dot" style="background:${COLORS[i % COLORS.length]}"></span>
+      <span class="panel-name" title="${img.name || ''}">${img.name || `Photo ${i + 1}`}</span>
+      <span class="panel-del" title="Supprimer">×</span>
+    `;
+    li.querySelector('.panel-del').addEventListener('click', e => {
+      e.stopPropagation();
+      deletePhoto(i);
+    });
+    li.addEventListener('dragstart', e => {
+      dndSrc = i;
+      e.dataTransfer.effectAllowed = 'move';
+      setTimeout(() => { li.style.opacity = '0.4'; }, 0);
+    });
+    li.addEventListener('dragend', () => {
+      document.querySelectorAll('.panel-item').forEach(el => {
+        el.style.opacity = '';
+        el.classList.remove('drag-over');
+      });
+      dndSrc = null;
+    });
+    li.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (dndSrc !== null && dndSrc !== i) li.classList.add('drag-over');
+    });
+    li.addEventListener('dragleave', () => li.classList.remove('drag-over'));
+    li.addEventListener('drop', e => {
+      e.preventDefault();
+      li.classList.remove('drag-over');
+      if (dndSrc !== null && dndSrc !== i) applyReorder(dndSrc, i);
+    });
+    list.appendChild(li);
+  });
+}
+
+// ── Add more photos ──
+const addFileInput = document.getElementById('addFileInput');
+
+function triggerAddPhotos() {
+  if (S.images.length >= 60) { showErr('eyeErr', 'Limite de 60 photos atteinte.'); return; }
+  hideErr('eyeErr');
+  addFileInput.click();
+}
+
+document.getElementById('addPhotosBtn').addEventListener('click', triggerAddPhotos);
+document.getElementById('panelAddBtn').addEventListener('click', triggerAddPhotos);
+
+addFileInput.addEventListener('change', () => {
+  const files = Array.from(addFileInput.files).filter(f =>
+    f.type === 'image/jpeg' || f.type === 'image/jpg' || /\.jpe?g$/i.test(f.name)
+  );
+  addFileInput.value = '';
+  if (!files.length) return;
+  const toAdd = files.slice(0, 60 - S.images.length);
+
+  const wrap = document.getElementById('addProgressWrap');
+  const fill = document.getElementById('addProgFill');
+  const txt  = document.getElementById('addProgTxt');
+  wrap.style.display = 'block';
+  fill.style.width = '0%';
+  txt.textContent  = `Envoi de ${toAdd.length} photo${toAdd.length > 1 ? 's' : ''}...`;
+
+  const fd = new FormData();
+  fd.append('sid', S.sid);
+  toAdd.forEach(f => fd.append('photos', f));
+
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', '/add_photos');
+  xhr.upload.addEventListener('progress', e => {
+    if (e.lengthComputable) {
+      const pct = Math.round(e.loaded / e.total * 100);
+      fill.style.width = pct + '%';
+      txt.textContent  = `Envoi : ${pct}%`;
+    }
+  });
+  xhr.onload = () => {
+    wrap.style.display = 'none';
+    try {
+      const data = JSON.parse(xhr.responseText);
+      if (xhr.status !== 200) throw new Error(data.error);
+      const newImgs = data.images.map((img, k) => ({ ...img, name: toAdd[k].name }));
+      S.images = S.images.concat(newImgs);
+      S.eyes   = S.eyes.concat(newImgs.map(() => ({ left: null, right: null })));
+      rebuildEyesSection();
+    } catch (e) {
+      showErr('eyeErr', e.message || 'Erreur lors de l\'ajout');
+    }
+  };
+  xhr.onerror = () => {
+    wrap.style.display = 'none';
+    showErr('eyeErr', 'Erreur réseau');
+  };
+  xhr.send(fd);
+});
 
 function onEyeClick(e, idx) {
   const canvas = document.getElementById(`ecanv-${idx}`);
@@ -1060,8 +1562,238 @@ document.getElementById('restartBtn').addEventListener('click', () => {
   show('sec-upload');
 });
 
+// ═══════════════════════════════════════════════
+//  Crop tool
+// ═══════════════════════════════════════════════
+const CROP = {
+  idx: null, imgEl: null, canvas: null, ctx: null,
+  dispW: 0, dispH: 0, scaleX: 1, scaleY: 1,
+  rect: { x: 0, y: 0, w: 0, h: 0 },
+  drag: null, dragStart: null,
+};
+
+function openCropModal(idx) {
+  CROP.idx = idx;
+  const img = S.images[idx];
+  const el  = new Image();
+  el.onload = () => {
+    CROP.imgEl = el;
+    const nw = el.naturalWidth, nh = el.naturalHeight;
+    const maxW = Math.min(820, window.innerWidth  - 80);
+    const maxH = Math.min(560, window.innerHeight - 220);
+    const sc   = Math.min(maxW / nw, maxH / nh, 1);
+    CROP.dispW  = Math.round(nw * sc);
+    CROP.dispH  = Math.round(nh * sc);
+    CROP.scaleX = nw / CROP.dispW;
+    CROP.scaleY = nh / CROP.dispH;
+
+    const cv    = document.getElementById('cropCanvas');
+    cv.width    = CROP.dispW;
+    cv.height   = CROP.dispH;
+    CROP.canvas = cv;
+    CROP.ctx    = cv.getContext('2d');
+    CROP.rect   = { x: 0, y: 0, w: CROP.dispW, h: CROP.dispH };
+    CROP.drag   = null;
+
+    document.getElementById('cropPhotoLabel').textContent =
+      `Recadrer — Photo ${idx + 1}${img.name ? ' · ' + img.name : ''}`;
+    document.getElementById('cropModal').style.display = 'flex';
+    cropRender();
+  };
+  el.src = 'data:image/jpeg;base64,' + img.b64;
+}
+
+function closeCropModal() {
+  document.getElementById('cropModal').style.display = 'none';
+  CROP.idx = null;
+  CROP.imgEl = null;
+}
+
+function cropHandles() {
+  const { x, y, w, h } = CROP.rect;
+  const cx = x + w / 2, cy = y + h / 2;
+  return [
+    { id: 'tl', x, y },        { id: 'tr', x: x+w, y },
+    { id: 'bl', x, y: y+h },   { id: 'br', x: x+w, y: y+h },
+    { id: 't',  x: cx, y },    { id: 'b',  x: cx, y: y+h },
+    { id: 'l',  x, y: cy },    { id: 'r',  x: x+w, y: cy },
+  ];
+}
+
+function cropRender() {
+  const { ctx, imgEl, dispW, dispH, rect } = CROP;
+  ctx.clearRect(0, 0, dispW, dispH);
+  ctx.drawImage(imgEl, 0, 0, dispW, dispH);
+
+  // Dark overlay outside selection
+  ctx.fillStyle = 'rgba(0,0,0,0.58)';
+  ctx.fillRect(0, 0, dispW, rect.y);
+  ctx.fillRect(0, rect.y + rect.h, dispW, dispH - rect.y - rect.h);
+  ctx.fillRect(0, rect.y, rect.x, rect.h);
+  ctx.fillRect(rect.x + rect.w, rect.y, dispW - rect.x - rect.w, rect.h);
+
+  // Rule-of-thirds grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.lineWidth   = 0.5;
+  for (let k = 1; k <= 2; k++) {
+    const tx = rect.x + rect.w * k / 3, ty = rect.y + rect.h * k / 3;
+    ctx.beginPath(); ctx.moveTo(tx, rect.y);    ctx.lineTo(tx, rect.y + rect.h); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(rect.x, ty);    ctx.lineTo(rect.x + rect.w, ty); ctx.stroke();
+  }
+
+  // Selection border
+  ctx.strokeStyle = 'rgba(255,255,255,0.88)';
+  ctx.lineWidth   = 1.5;
+  ctx.strokeRect(rect.x + 0.5, rect.y + 0.5, rect.w - 1, rect.h - 1);
+
+  // Handles (8 points)
+  cropHandles().forEach(h => {
+    ctx.fillStyle   = '#ffffff';
+    ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+    ctx.lineWidth   = 1;
+    ctx.fillRect  (h.x - 4, h.y - 4, 8, 8);
+    ctx.strokeRect(h.x - 4, h.y - 4, 8, 8);
+  });
+}
+
+function cropHitTest(mx, my) {
+  const HIT = 11;
+  for (const h of cropHandles()) {
+    if (Math.abs(mx - h.x) <= HIT && Math.abs(my - h.y) <= HIT) return h.id;
+  }
+  const { x, y, w, h } = CROP.rect;
+  if (mx >= x && mx <= x + w && my >= y && my <= y + h) return 'move';
+  return null;
+}
+
+function cropCursorFor(hit) {
+  if (!hit)           return 'default';
+  if (hit === 'move') return 'move';
+  if (hit === 'tl' || hit === 'br') return 'nwse-resize';
+  if (hit === 'tr' || hit === 'bl') return 'nesw-resize';
+  if (hit === 't'  || hit === 'b')  return 'ns-resize';
+  return 'ew-resize';
+}
+
+function cropMousePos(e) {
+  const r = CROP.canvas.getBoundingClientRect();
+  return {
+    x: (e.clientX - r.left) * (CROP.canvas.width  / r.width),
+    y: (e.clientY - r.top)  * (CROP.canvas.height / r.height),
+  };
+}
+
+function onCropDown(e) {
+  const { x, y } = cropMousePos(e);
+  const hit = cropHitTest(x, y);
+  if (!hit) return;
+  CROP.drag      = hit;
+  CROP.dragStart = { mx: x, my: y, ...CROP.rect };
+  e.preventDefault();
+}
+
+function onCropMove(e) {
+  const { x, y } = cropMousePos(e);
+  if (!CROP.drag) {
+    CROP.canvas.style.cursor = cropCursorFor(cropHitTest(x, y));
+    return;
+  }
+  const ds = CROP.dragStart, dx = x - ds.mx, dy = y - ds.my;
+  const MIN = 20;
+  let { x: rx, y: ry, w: rw, h: rh } = ds;
+
+  switch (CROP.drag) {
+    case 'move':
+      rx = Math.max(0, Math.min(ds.x + dx, CROP.dispW - ds.w));
+      ry = Math.max(0, Math.min(ds.y + dy, CROP.dispH - ds.h));
+      break;
+    case 'tl': rx = Math.min(ds.x+dx, ds.x+ds.w-MIN); rw = ds.x+ds.w-rx; ry = Math.min(ds.y+dy, ds.y+ds.h-MIN); rh = ds.y+ds.h-ry; break;
+    case 'tr': rw = Math.max(MIN, ds.w+dx); ry = Math.min(ds.y+dy, ds.y+ds.h-MIN); rh = ds.y+ds.h-ry; break;
+    case 'bl': rx = Math.min(ds.x+dx, ds.x+ds.w-MIN); rw = ds.x+ds.w-rx; rh = Math.max(MIN, ds.h+dy); break;
+    case 'br': rw = Math.max(MIN, ds.w+dx); rh = Math.max(MIN, ds.h+dy); break;
+    case 't':  ry = Math.min(ds.y+dy, ds.y+ds.h-MIN); rh = ds.y+ds.h-ry; break;
+    case 'b':  rh = Math.max(MIN, ds.h+dy); break;
+    case 'l':  rx = Math.min(ds.x+dx, ds.x+ds.w-MIN); rw = ds.x+ds.w-rx; break;
+    case 'r':  rw = Math.max(MIN, ds.w+dx); break;
+  }
+
+  // Clamp to canvas bounds
+  if (rx < 0) { rw += rx; rx = 0; }
+  if (ry < 0) { rh += ry; ry = 0; }
+  if (rx + rw > CROP.dispW) rw = CROP.dispW - rx;
+  if (ry + rh > CROP.dispH) rh = CROP.dispH - ry;
+
+  CROP.rect = { x: rx, y: ry, w: Math.max(MIN, rw), h: Math.max(MIN, rh) };
+  cropRender();
+}
+
+function onCropUp() { CROP.drag = null; }
+
+async function applyCrop() {
+  const { rect, imgEl, scaleX, scaleY, idx } = CROP;
+  const off = document.createElement('canvas');
+  off.width  = Math.round(rect.w * scaleX);
+  off.height = Math.round(rect.h * scaleY);
+  off.getContext('2d').drawImage(
+    imgEl,
+    rect.x * scaleX, rect.y * scaleY, rect.w * scaleX, rect.h * scaleY,
+    0, 0, off.width, off.height
+  );
+  const b64 = off.toDataURL('image/jpeg', 0.88);
+  closeCropModal();
+
+  try {
+    const res  = await fetch('/crop_photo', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ sid: S.sid, idx, b64 })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    S.images[idx] = { ...data.image, name: S.images[idx].name, cropped: true };
+    S.eyes[idx]   = { left: null, right: null };
+    rebuildEyesSection();
+  } catch (err) {
+    showErr('eyeErr', 'Erreur de recadrage : ' + err.message);
+  }
+}
+
+// ── Bind crop events (once) ──
+(function () {
+  const cv = document.getElementById('cropCanvas');
+
+  cv.addEventListener('mousedown',  onCropDown);
+  cv.addEventListener('mousemove',  onCropMove);
+  cv.addEventListener('mouseup',    onCropUp);
+  cv.addEventListener('mouseleave', onCropUp);
+
+  cv.addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    onCropDown({ clientX: t.clientX, clientY: t.clientY, preventDefault: () => e.preventDefault() });
+  }, { passive: false });
+  cv.addEventListener('touchmove', e => {
+    onCropMove({ clientX: e.touches[0].clientX, clientY: e.touches[0].clientY });
+    e.preventDefault();
+  }, { passive: false });
+  cv.addEventListener('touchend', onCropUp);
+
+  document.getElementById('cropApplyBtn') .addEventListener('click', applyCrop);
+  document.getElementById('cropCancelBtn').addEventListener('click', closeCropModal);
+  document.getElementById('cropCloseBtn') .addEventListener('click', closeCropModal);
+  document.getElementById('cropResetBtn') .addEventListener('click', () => {
+    CROP.rect = { x: 0, y: 0, w: CROP.dispW, h: CROP.dispH };
+    cropRender();
+  });
+})();
+
 // Keyboard shortcuts
 document.addEventListener('keydown', e => {
+  // Crop modal shortcuts (priority)
+  if (document.getElementById('cropModal').style.display !== 'none') {
+    if (e.key === 'Escape') { e.preventDefault(); closeCropModal(); }
+    if (e.key === 'Enter')  { e.preventDefault(); applyCrop(); }
+    return;
+  }
   if (!document.getElementById('sec-result').classList.contains('active')) return;
   if (e.code === 'Space') {
     e.preventDefault();

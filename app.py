@@ -156,5 +156,92 @@ def generate():
     return jsonify(frames=frames, frame_photo=frame_photo, n_photos=n)
 
 
+@app.route('/add_photos', methods=['POST'])
+def add_photos():
+    sid   = request.form.get('sid')
+    files = request.files.getlist('photos')
+
+    imgs = SESSION_STORE.get(sid)
+    if imgs is None:
+        return jsonify(error='Session expirée, rechargez la page'), 400
+    if len(imgs) + len(files) > 60:
+        return jsonify(error=f'Maximum 60 photos ({len(imgs)} déjà chargées)'), 400
+
+    new_previews = []
+    for f in files:
+        data = np.frombuffer(f.read(), np.uint8)
+        img  = cv2.imdecode(data, cv2.IMREAD_COLOR)
+        if img is None:
+            return jsonify(error='Image invalide'), 400
+        h, w = img.shape[:2]
+        if max(h, w) > 720:
+            s = 720 / max(h, w)
+            img = cv2.resize(img, (int(w * s), int(h * s)), interpolation=cv2.INTER_AREA)
+        imgs.append(img)
+        new_previews.append({'b64': img_to_b64(img, 80), 'w': img.shape[1], 'h': img.shape[0]})
+
+    return jsonify(images=new_previews)
+
+
+@app.route('/remove_photo', methods=['POST'])
+def remove_photo():
+    body = request.get_json()
+    sid  = body.get('sid')
+    idx  = body.get('idx')
+
+    imgs = SESSION_STORE.get(sid)
+    if imgs is None:
+        return jsonify(error='Session expirée'), 400
+    if not (0 <= idx < len(imgs)):
+        return jsonify(error='Index invalide'), 400
+
+    imgs.pop(idx)
+    return jsonify(ok=True)
+
+
+@app.route('/crop_photo', methods=['POST'])
+def crop_photo():
+    body = request.get_json()
+    sid  = body.get('sid')
+    idx  = body.get('idx')
+    b64  = body.get('b64', '')
+
+    imgs = SESSION_STORE.get(sid)
+    if imgs is None:
+        return jsonify(error='Session expirée'), 400
+    if not (0 <= idx < len(imgs)):
+        return jsonify(error='Index invalide'), 400
+
+    # Strip data URL prefix if present
+    if ',' in b64:
+        b64 = b64.split(',', 1)[1]
+    data = np.frombuffer(base64.b64decode(b64), np.uint8)
+    img  = cv2.imdecode(data, cv2.IMREAD_COLOR)
+    if img is None:
+        return jsonify(error='Image invalide'), 400
+
+    h, w = img.shape[:2]
+    if max(h, w) > 720:
+        s = 720 / max(h, w)
+        img = cv2.resize(img, (int(w * s), int(h * s)), interpolation=cv2.INTER_AREA)
+
+    imgs[idx] = img
+    return jsonify(image={'b64': img_to_b64(img, 80), 'w': img.shape[1], 'h': img.shape[0]})
+
+
+@app.route('/reorder_photos', methods=['POST'])
+def reorder_photos():
+    body  = request.get_json()
+    sid   = body.get('sid')
+    order = body.get('order')
+
+    imgs = SESSION_STORE.get(sid)
+    if imgs is None:
+        return jsonify(error='Session expirée'), 400
+
+    SESSION_STORE[sid] = [imgs[i] for i in order]
+    return jsonify(ok=True)
+
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
