@@ -80,8 +80,8 @@ def index():
 @app.route('/upload', methods=['POST'])
 def upload():
     files = request.files.getlist('photos')
-    if not (2 <= len(files) <= 5):
-        return jsonify(error='Envoyez 2 à 5 photos'), 400
+    if not (2 <= len(files) <= 60):
+        return jsonify(error='Envoyez 2 à 60 photos'), 400
 
     sid = str(uuid.uuid4())
     imgs = []
@@ -125,29 +125,33 @@ def generate():
 
     dl = eyes[0]['left']
     dr = eyes[0]['right']
-    aligned = [imgs[0].copy()]
-    for i in range(1, n):
-        al = align_to_eyes(imgs[i], eyes[i]['left'], eyes[i]['right'],
-                           dl, dr, (w0, h0))
-        aligned.append(al)
 
     PAUSE, MORPH = 6, 24
     frames = []
     frame_photo = []
 
+    # Traiter les paires une par une pour limiter la mémoire (jamais plus de 2 images alignées simultanément)
+    prev = imgs[0].copy()
+
     for _ in range(PAUSE):
-        frames.append(img_to_b64(aligned[0]))
+        frames.append(img_to_b64(prev))
         frame_photo.append(0.0)
 
     for i in range(n - 1):
-        mf = morph_pair(aligned[i], aligned[i + 1], MORPH)
+        nxt = align_to_eyes(imgs[i + 1], eyes[i + 1]['left'], eyes[i + 1]['right'],
+                             dl, dr, (w0, h0))
+        mf = morph_pair(prev, nxt, MORPH)
         for j, frame in enumerate(mf):
             frames.append(img_to_b64(frame))
             frame_photo.append(i + smoothstep((j + 1) / (MORPH + 1)))
+        del mf
         for _ in range(PAUSE):
-            frames.append(img_to_b64(aligned[i + 1]))
+            frames.append(img_to_b64(nxt))
             frame_photo.append(float(i + 1))
+        del prev
+        prev = nxt
 
+    del prev
     del SESSION_STORE[sid]
     return jsonify(frames=frames, frame_photo=frame_photo, n_photos=n)
 

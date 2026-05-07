@@ -275,15 +275,19 @@ h1 em { color: var(--accent); font-style: normal; }
   gap: 0.5rem;
   flex-wrap: wrap;
   justify-content: center;
+  max-width: 700px;
+  width: 100%;
 }
+.thumbs-row::-webkit-scrollbar { height: 4px; }
+.thumbs-row::-webkit-scrollbar-track { background: #111; }
+.thumbs-row::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
 .thumb-item {
   position: relative;
   cursor: pointer;
+  flex-shrink: 0;
 }
 .thumb-item canvas {
   display: block;
-  width: 64px;
-  height: 48px;
   border-radius: 5px;
   border: 2px solid transparent;
   transition: border-color 0.15s, transform 0.12s;
@@ -420,8 +424,8 @@ h1 em { color: var(--accent); font-style: normal; }
       <path d="M21 15l-5-5L5 21"/>
     </svg>
     <strong>Glissez vos photos ici</strong>
-    <p>ou cliquez pour choisir 2 à 5 fichiers JPEG</p>
-    <small>JPEG uniquement &bull; 50 MB max</small>
+    <p>ou cliquez pour choisir 2 à 60 fichiers JPEG</p>
+    <small>JPEG uniquement &bull; 100 MB max</small>
     <input type="file" id="fileInput" accept="image/jpeg,image/jpg" multiple>
   </div>
   <div class="error-msg" id="uploadErr"></div>
@@ -431,6 +435,10 @@ h1 em { color: var(--accent); font-style: normal; }
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
       Charger les photos
     </button>
+  </div>
+  <div id="uploadProgressWrap" style="display:none;text-align:center;margin-top:1rem">
+    <div class="prog-bar" style="margin:0 auto 0.6rem"><div class="prog-fill" id="uploadProgFill"></div></div>
+    <p id="uploadProgTxt" style="font-size:0.82rem;color:var(--muted)"></p>
   </div>
 </section>
 
@@ -508,7 +516,12 @@ const PAUSE  = 6;
 const MORPH  = 24;
 const FPS    = 24;
 
-const COLORS = ['#77aaff','#ffaa55','#55ffaa','#ff77bb','#aaffee'];
+const COLORS = [
+  '#77aaff','#ffaa55','#55ffaa','#ff77bb','#aaffee',
+  '#ffdd55','#aa77ff','#55ddff','#ff5588','#44ffbb',
+  '#ffbbaa','#88aaff','#ffcc77','#77ffcc','#dd88ff',
+  '#55ccff','#ffaa88','#aaffbb','#ff99cc','#99ddff'
+];
 
 // ═══════════════════════════════════════════════
 //  State
@@ -565,44 +578,80 @@ function applyFiles(files) {
   hideErr('uploadErr');
   const ok = files.filter(f =>
     f.type === 'image/jpeg' || f.type === 'image/jpg' || /\.jpe?g$/i.test(f.name)
-  ).slice(0, 5);
-  if (ok.length < 2 || ok.length > 5) {
-    showErr('uploadErr', 'Sélectionnez entre 2 et 5 photos JPEG.');
+  ).slice(0, 60);
+  if (ok.length < 2) {
+    showErr('uploadErr', 'Sélectionnez entre 2 et 60 photos JPEG.');
     uploadBtn.disabled = true;
     selectedFiles = [];
     fileList.textContent = '';
     return;
   }
   selectedFiles = ok;
-  fileList.textContent = ok.map(f => f.name).join(' · ');
+  fileList.textContent = ok.length <= 8
+    ? ok.map(f => f.name).join(' · ')
+    : `${ok.length} photos sélectionnées`;
   uploadBtn.disabled = false;
 }
 
-uploadBtn.addEventListener('click', async () => {
+uploadBtn.addEventListener('click', () => {
   if (!selectedFiles.length) return;
   uploadBtn.disabled = true;
-  uploadBtn.textContent = 'Envoi en cours...';
   hideErr('uploadErr');
 
   const fd = new FormData();
   selectedFiles.forEach(f => fd.append('photos', f));
 
-  try {
-    const res  = await fetch('/upload', { method: 'POST', body: fd });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error);
+  const progressWrap = document.getElementById('uploadProgressWrap');
+  const progFill     = document.getElementById('uploadProgFill');
+  const progTxt      = document.getElementById('uploadProgTxt');
 
-    S.sid    = data.sid;
-    S.images = data.images;
-    S.eyes   = data.images.map(() => ({ left: null, right: null }));
+  progressWrap.style.display = 'block';
+  progFill.style.width = '0%';
+  progTxt.textContent  = 'Préparation de l\'envoi...';
 
-    buildEyeUI();
-    show('sec-eyes');
-  } catch (e) {
-    showErr('uploadErr', e.message || 'Erreur lors de l\'envoi');
-    uploadBtn.disabled  = false;
-    uploadBtn.textContent = 'Charger les photos';
-  }
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', '/upload');
+
+  xhr.upload.addEventListener('progress', e => {
+    if (e.lengthComputable) {
+      const pct = Math.round(e.loaded / e.total * 100);
+      progFill.style.width = pct + '%';
+      const mo = (e.loaded / 1048576).toFixed(1);
+      const mt = (e.total  / 1048576).toFixed(1);
+      progTxt.textContent = `Envoi : ${pct}% — ${mo} / ${mt} Mo`;
+    }
+  });
+
+  xhr.upload.addEventListener('load', () => {
+    progFill.style.width = '100%';
+    progTxt.textContent  = 'Traitement sur le serveur...';
+  });
+
+  xhr.onload = () => {
+    progressWrap.style.display = 'none';
+    try {
+      const data = JSON.parse(xhr.responseText);
+      if (xhr.status !== 200) throw new Error(data.error);
+
+      S.sid    = data.sid;
+      S.images = data.images;
+      S.eyes   = data.images.map(() => ({ left: null, right: null }));
+
+      buildEyeUI();
+      show('sec-eyes');
+    } catch (e) {
+      showErr('uploadErr', e.message || 'Erreur lors de l\'envoi');
+      uploadBtn.disabled = false;
+    }
+  };
+
+  xhr.onerror = () => {
+    progressWrap.style.display = 'none';
+    showErr('uploadErr', 'Erreur réseau lors de l\'envoi');
+    uploadBtn.disabled = false;
+  };
+
+  xhr.send(fd);
 });
 
 // ═══════════════════════════════════════════════
@@ -760,17 +809,20 @@ document.getElementById('generateBtn').addEventListener('click', async () => {
     document.getElementById('progFill').style.width = pct + '%';
   }, 400);
 
+  const pairsCount = S.eyes.length - 1;
   const steps = [
     'Alignement des images...',
-    'Calcul du flux optique...',
+    `Calcul du flux optique (${pairsCount} paire${pairsCount > 1 ? 's' : ''})...`,
     'Génération des transitions...',
-    'Encodage des frames...'
+    'Encodage des frames...',
+    'Finalisation en cours...'
   ];
   let si = 0;
+  const stepInterval = Math.max(2000, pairsCount * 250);
   const txtTimer = setInterval(() => {
     if (si < steps.length - 1) si++;
     document.getElementById('loadingTxt').textContent = steps[si];
-  }, 2500);
+  }, stepInterval);
 
   try {
     const res  = await fetch('/generate', {
@@ -874,8 +926,26 @@ function buildThumbs() {
   const row = document.getElementById('thumbsRow');
   row.innerHTML = '';
 
+  // Taille adaptive selon le nombre de photos
+  let tw, th;
+  if (S.nPhotos <= 10)      { tw = 64; th = 48; }
+  else if (S.nPhotos <= 25) { tw = 44; th = 33; }
+  else                      { tw = 28; th = 21; }
+
+  // Défilement horizontal quand trop de photos pour tenir sur une ligne
+  if (S.nPhotos > 10) {
+    row.style.flexWrap       = 'nowrap';
+    row.style.overflowX      = 'auto';
+    row.style.justifyContent = 'flex-start';
+    row.style.paddingBottom  = '6px';
+  } else {
+    row.style.flexWrap       = 'wrap';
+    row.style.overflowX      = 'visible';
+    row.style.justifyContent = 'center';
+    row.style.paddingBottom  = '0';
+  }
+
   for (let i = 0; i < S.nPhotos; i++) {
-    // The i-th photo's pause block starts at i*(PAUSE+MORPH)
     const fi = i * (PAUSE + MORPH);
     const img = S.imgEls[Math.min(fi, S.imgEls.length - 1)];
 
@@ -884,14 +954,17 @@ function buildThumbs() {
     wrap.id = `thumb-${i}`;
 
     const tc = document.createElement('canvas');
-    tc.width  = 64;
-    tc.height = 48;
+    tc.width  = tw;
+    tc.height = th;
+    tc.style.width  = tw + 'px';
+    tc.style.height = th + 'px';
     tc.style.borderColor = COLORS[i % COLORS.length];
-    tc.getContext('2d').drawImage(img, 0, 0, 64, 48);
+    tc.getContext('2d').drawImage(img, 0, 0, tw, th);
 
     const lbl = document.createElement('span');
     lbl.className = 'thumb-lbl';
     lbl.textContent = `P${i+1}`;
+    if (tw <= 28) lbl.style.fontSize = '0.5rem';
 
     wrap.appendChild(tc);
     wrap.appendChild(lbl);
@@ -979,10 +1052,11 @@ document.getElementById('restartBtn').addEventListener('click', () => {
     imgEls:[], cur:0, playing:false, looping:true, lastTs:0, raf:null
   });
   selectedFiles = [];
-  fileInput.value   = '';
+  fileInput.value      = '';
   fileList.textContent = '';
   uploadBtn.disabled   = true;
-  uploadBtn.textContent = 'Charger les photos';
+  uploadBtn.innerHTML  = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14m-7-7l7 7-7 7"/></svg> Charger les photos';
+  document.getElementById('uploadProgressWrap').style.display = 'none';
   show('sec-upload');
 });
 
