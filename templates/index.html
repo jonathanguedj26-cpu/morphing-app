@@ -1676,6 +1676,7 @@ function cropCursorFor(hit) {
 }
 
 function cropMousePos(e) {
+  if (!CROP.canvas) return { x: 0, y: 0 };
   const r = CROP.canvas.getBoundingClientRect();
   return {
     x: (e.clientX - r.left) * (CROP.canvas.width  / r.width),
@@ -1684,6 +1685,7 @@ function cropMousePos(e) {
 }
 
 function onCropDown(e) {
+  if (!CROP.canvas) return;
   const { x, y } = cropMousePos(e);
   const hit = cropHitTest(x, y);
   if (!hit) return;
